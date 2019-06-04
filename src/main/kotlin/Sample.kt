@@ -31,8 +31,8 @@ fun logln(s : String) {
 suspend fun httpGet(client : HttpClient) {
     val delay = SecureRandom().nextInt(10000)
     logln("Start request, delay=$delay")
-    val firstRequest = client.myGet("http://httpstat.us/200?sleep=$delay")
-    val len = firstRequest.size
+    val response = client.myGet("http://httpstat.us/200?sleep=$delay")
+    val len = response.size
     logln("Got response, delay=$delay, length=$len")
 }
 

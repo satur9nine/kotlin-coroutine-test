@@ -109,8 +109,8 @@ public final class SampleKt
                 throw new IllegalStateException("call to 'resume' before 'invoke' with coroutine");
             }
         }
-        final byte[] firstRequest = (byte[])myGet$default;
-        final int len = firstRequest.length;
+        final byte[] response = (byte[])myGet$default;
+        final int len = response.length;
         logln("Got response, delay=" + delay + ", length=" + len);
         return Unit.INSTANCE;
     }
