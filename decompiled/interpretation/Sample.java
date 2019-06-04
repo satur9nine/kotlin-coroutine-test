@@ -2,7 +2,8 @@
  * This is a rough intepretation of how what coroutines look after being
  * decompiled from JVM class files produced by the kotlin compiler.
  *
- * See Sample.kt for the original Kotlin source code
+ * See Sample.kt for the original Kotlin source code and SampleKt.decomp.java
+ * for the raw decompiled code.
  */
 
 enum CoroutineStatus {
@@ -49,7 +50,7 @@ class MyCoroutine {
     MyContinuation continuation;
 
     Object invoke() {
-        int delay;
+        int delay = 0;
 
         // Obtain result possibly set by any invoked suspend functions
         Object result = continuation.result;

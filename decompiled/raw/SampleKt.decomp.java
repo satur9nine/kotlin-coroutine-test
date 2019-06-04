@@ -82,7 +82,7 @@ public final class SampleKt
         switch (((SampleKt$httpGet.SampleKt$httpGet$1)$continuation).label) {
             case 0: {
                 ResultKt.throwOnFailure(result);
-                delay = new SecureRandom().nextInt(40000);
+                delay = new SecureRandom().nextInt(10000);
                 logln("Start request, delay=" + delay);
                 final HttpClient httpClient = client;
                 final String string = "http://httpstat.us/200?sleep=" + delay;
