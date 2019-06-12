@@ -12,6 +12,15 @@ enum CoroutineStatus {
 
 class Continuation {
     Object result;
+    CoroutineStatus status;
+}
+
+interface Coroutine {
+    // Run the coroutine synchronously
+    Object invoke();
+
+    // Allows the event loop to get the status
+    Continuation getContinuation();
 }
 
 class Sample {
@@ -20,9 +29,14 @@ class Sample {
 
         CoroutineEventLoop cel;
 
-        cel.addCoroutine(new MyCoroutine());
-        cel.addCoroutine(new MyCoroutine());
-        cel.addCoroutine(new MyCoroutine());
+        // repeat 3 times
+        for (int i = 0; i < 3; i++) {
+            cel.addCoroutine(new MyCoroutine());
+        }
+
+        // This is a gross simplification of runBlocking that isn't really
+        // accurate but close enough for our needs, for real code see:
+        // https://github.com/Kotlin/kotlinx.coroutines/blob/1.2.1/kotlinx-coroutines-core/jvm/src/Builders.kt
 
         // begin event loop, exit only when all coroutine are complete
         do {
@@ -30,24 +44,31 @@ class Sample {
             Coroutine c = cel.getNextActiveCoroutine();
 
             // execute selected coroutine
-            Object result = c.invoke();
+            CoroutineStatus status = c.invoke();
 
-            if (result == Intrinsics.COMPLETE) {
+            // remove this particular coroutine if it is complete
+            if (status == Intrinsics.COMPLETE) {
                 cel.removeCoroutine(c);
             }
+
+            c.getContinuation().status = status;
         } while (cel.hasCoroutines());
 
         logln("Goodbye");
     }
 }
 
-class MyCoroutine {
+class MyCoroutine extends Coroutine {
     class MyContinuation extends Continuation {
         int delay;
     }
 
     int label = 0;
     MyContinuation continuation;
+
+    Continuation getContinuation() {
+        return continuation;
+    }
 
     Object invoke() {
         int delay = 0;
@@ -57,6 +78,7 @@ class MyCoroutine {
         Object deflt = null;
 
         switch (label) {
+            // First half of the function starts here
             case 0:
                 delay = new SecureRandom().nextInt(10000);
                 logln("Start request, delay=" + delay);
@@ -66,12 +88,17 @@ class MyCoroutine {
                 continuation.delay = delay;
                 label = 1;
 
-                // takes a Continuation and sets the result when received
+                // The httpGet function takes a Continuation and when complete
+                // does the following:
+                //  * save result in Continuation#result
+                //  * set Continuation#status to ACTIVE
+                //  * notify event loop thread to wake up
                 deflt = httpGet(string, continuation);
                 if (deflt == Intrinsics.SUSPENDED) {
                     return Intrinsics.SUSPENDED;
                 }
                 break;
+            // Second half of the function starts here
             case 1:
                 // restore the stack
                 delay = continuation.delay;
@@ -82,5 +109,7 @@ class MyCoroutine {
         byte[] httpResponse = deflt;
         int len = httpResponse.length;
         logln("Got response, delay=" + delay + ", length=" + len);
+
+        return Intrinsics.COMPLETE;
     }
 }

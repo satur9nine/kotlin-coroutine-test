@@ -23,20 +23,26 @@ fun main() {
     logln("Goodbye")
 }
 
+suspend fun httpGet(client : HttpClient) {
+    // First half of the function starts here
+    val delay = SecureRandom().nextInt(10000)
+    logln("Start request, delay=$delay")
+    val response = client.myGet("http://httpstat.us/200?sleep=$delay")
+
+    // Second half of the function starts here
+    val len = response.size
+    logln("Got response, delay=$delay, length=$len")
+}
+
 fun logln(s : String) {
     val rb = ManagementFactory.getRuntimeMXBean()
     println(String.format(Locale.US, "%08d", rb.uptime) + ": " + s + " (" + Thread.currentThread() + ")")
 }
 
-suspend fun httpGet(client : HttpClient) {
-    val delay = SecureRandom().nextInt(10000)
-    logln("Start request, delay=$delay")
-    val response = client.myGet("http://httpstat.us/200?sleep=$delay")
-    val len = response.size
-    logln("Got response, delay=$delay, length=$len")
-}
-
-// Not inline to make the httpGet function simpler
+// Copied from Ktor client core for JVM but not inlined to make the decompiled
+// code easier to understand. This is a suspend function, meaning at one or
+// more places in the middle it may return and then pick up where it left off
+// later
 suspend fun HttpClient.myGet(
     urlString: String,
     block: HttpRequestBuilder.() -> Unit = {}
