@@ -28,6 +28,9 @@ fun main() {
                 httpGet(client)
             }
         }
+
+        waitForCall()
+
         logln("Within context bottom")
     }
 
@@ -35,6 +38,27 @@ fun main() {
     client.close()
     logln("Goodbye")
 }
+
+fun callMeSometime(callback: java.lang.Runnable) {
+    val delay = SecureRandom().nextInt(10000)
+    logln("Setting up local delay=$delay")
+
+    Thread({
+        Thread.sleep(delay.toLong())
+        logln("Calling after delay=$delay")
+        callback.run()
+    }, "local").start()
+}
+
+suspend fun waitForCall() =
+        suspendCancellableCoroutine { cont ->
+            logln("Start waitForCall")
+            val callback = java.lang.Runnable {
+                cont.resume(null, null)
+            }
+            callMeSometime(callback)
+            logln("End waitForCall")
+        }
 
 suspend fun httpGet(client : HttpClient) {
     // First half of the function starts here
@@ -51,7 +75,7 @@ suspend fun httpGet(client : HttpClient) {
 
 fun logln(s : String) {
     val rb = ManagementFactory.getRuntimeMXBean()
-    println(String.format(Locale.US, "%08d", rb.uptime) + ": " + s + " (" + Thread.currentThread() + ")")
+    println(String.format(Locale.US, "%08d", rb.uptime) + ": " + s + " (" + Thread.currentThread().name + ")")
 }
 
 // Copied from Ktor client core for JVM but not inlined to make the decompiled
