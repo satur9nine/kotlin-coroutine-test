@@ -2,13 +2,13 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
+import io.ktor.client.statement.*
 import io.ktor.http.takeFrom
 import kotlinx.coroutines.*
 import java.lang.management.ManagementFactory
 import java.security.SecureRandom
 import java.util.*
 
-@io.ktor.util.KtorExperimentalAPI
 fun main() {
     // Use the Coroutine based I/O client
     val client = HttpClient(CIO)
@@ -45,8 +45,8 @@ suspend fun httpGet(client : HttpClient) {
     val response = client.myGet("http://httpstat.us/200?sleep=$delay")
 
     // Second half of the function starts here
-    val len = response.size
-    logln("Got response, delay=$delay, length=$len")
+    val statusCode = response.status
+    logln("Got response, delay=$delay, $statusCode")
 }
 
 fun logln(s : String) {
@@ -61,7 +61,7 @@ fun logln(s : String) {
 suspend fun HttpClient.myGet(
     urlString: String,
     block: HttpRequestBuilder.() -> Unit = {}
-): ByteArray = get {
+): HttpResponse = get {
     url.takeFrom(urlString)
     block()
 }
